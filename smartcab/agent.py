@@ -8,7 +8,7 @@ class LearningAgent(Agent):
     """ An agent that learns to drive in the Smartcab world.
         This is the object you will be modifying. """
 
-    def __init__(self, env, learning=False, epsilon=1.0, alpha=0.5):
+    def __init__(self, env, learning=False, epsilon=1.05, alpha=0.5):
         super(LearningAgent, self).__init__(env)     # Set the agent in the evironment
         self.planner = RoutePlanner(self.env, self)  # Create a route planner
         self.valid_actions = self.env.valid_actions  # The set of valid actions
@@ -18,7 +18,6 @@ class LearningAgent(Agent):
         self.Q = dict()          # Create a Q-table which will be a dictionary of tuples
         self.epsilon = epsilon   # Random exploration factor
         self.alpha = alpha       # Learning factor
-        self.n_trials = 1        # number of current trial
 
         ###########
         ## TO DO ##
@@ -41,6 +40,12 @@ class LearningAgent(Agent):
         # Update additional class parameters as needed
         # If 'testing' is True, set epsilon and alpha to 0
 
+        if testing is True:
+            self.epsilon = 0.0
+            self.alpha = 0.0
+        else:
+            self.epsilon -= 0.05
+
         return None
 
     def build_state(self):
@@ -61,7 +66,12 @@ class LearningAgent(Agent):
         #   If it is not, create a dictionary in the Q-table for the current 'state'
         #   For each action, set the Q-value for the state-action pair to 0
 
-        state = (inputs, waypoint, deadline)
+        light = inputs['light']
+        oncoming = inputs['oncoming']
+        left = inputs['left']
+        right = inputs['right']
+        state = (waypoint, light, oncoming, left, right)
+
         return state
 
 
@@ -74,7 +84,7 @@ class LearningAgent(Agent):
         ###########
         # Calculate the maximum Q-value of all actions for a given state
 
-        maxQ = None
+        maxQ = max(self.Q[state], key=(lambda key: self.Q[state][key]))
 
         return maxQ
 
@@ -90,12 +100,13 @@ class LearningAgent(Agent):
         #   Then, for each action available, set the initial Q-value to 0.0
 
         # create a hashable representation of the state to use as a key
-        stateKey = str(state)
-        if self.learning:
-            if stateKey not in self.Q.keys():
-                self.Q[stateKey] = dict((el,0.0) for el in self.valid_actions)
+        #stateKey = str(state)
 
-        return self.Q
+        if self.learning is True:
+            if state not in self.Q.keys():
+                self.Q[state] = dict((el,0.0) for el in self.valid_actions)
+
+        return
 
 
     def choose_action(self, state):
@@ -107,7 +118,6 @@ class LearningAgent(Agent):
         self.next_waypoint = self.planner.next_waypoint()
 
 
-        action = random.choice(self.valid_actions)
 
         ###########
         ## TO DO ##
@@ -116,8 +126,14 @@ class LearningAgent(Agent):
         # When learning, choose a random action with 'epsilon' probability
         #   Otherwise, choose an action with the highest Q-value for the current state
 
-        return action
+        action = random.choice(self.valid_actions)
+        p_random = random.uniform(0, 1)
 
+        if self.learning is True:
+            maxQ = self.get_maxQ(state)
+            if p_random <= 1-self.epsilon: #(1-epsilon probability choose random)
+                action = maxQ
+        return action
 
     def learn(self, state, action, reward):
         """ The learn function is called after the agent completes an action and
@@ -129,6 +145,9 @@ class LearningAgent(Agent):
         ###########
         # When learning, implement the value iteration update rule
         #   Use only the learning rate 'alpha' (do not use the discount factor 'gamma')
+
+        if self.learning is True:
+            self.Q[self.state][action] = (1-self.alpha)*self.Q[self.state][action] + self.alpha*(reward)
 
         return
 
@@ -142,6 +161,7 @@ class LearningAgent(Agent):
         self.createQ(state)                 # Create 'state' in Q-table
         action = self.choose_action(state)  # Choose an action
         reward = self.env.act(self, action) # Receive a reward
+        next_state = self.build_state()     # get state after action taken
         self.learn(state, action, reward)   # Q-learn
 
         return
@@ -165,7 +185,7 @@ def run():
     #   learning   - set to True to force the driving agent to use Q-learning
     #    * epsilon - continuous value for the exploration factor, default is 1
     #    * alpha   - continuous value for the learning rate, default is 0.5
-    agent = env.create_agent(LearningAgent)
+    agent = env.create_agent(LearningAgent,learning=False)
 
     ##############
     # Follow the driving agent
@@ -180,7 +200,7 @@ def run():
     #   display      - set to False to disable the GUI if PyGame is enabled
     #   log_metrics  - set to True to log trial and simulation results to /logs
     #   optimized    - set to True to change the default log file name
-    sim = Simulator(env, update_delay=2.0, log_metrics=True, display=True)
+    sim = Simulator(env, update_delay=0.01, log_metrics=True, display=False)
 
     ##############
     # Run the simulator
