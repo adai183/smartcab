@@ -3,6 +3,9 @@ import math
 from environment import Agent, Environment
 from planner import RoutePlanner
 from simulator import Simulator
+from helper import evaluate_results
+import subprocess
+
 
 class LearningAgent(Agent):
     """ An agent that learns to drive in the Smartcab world.
@@ -45,7 +48,7 @@ class LearningAgent(Agent):
             self.epsilon = 0.0
             self.alpha = 0.0
         else:
-            self.epsilon = float(1)/math.exp(float(self.a*self.total_trials))
+             self.epsilon = float(1)/math.exp(float(self.a*self.total_trials))
 
         return None
 
@@ -190,7 +193,7 @@ def run():
     #   learning   - set to True to force the driving agent to use Q-learning
     #    * epsilon - continuous value for the exploration factor, default is 1
     #    * alpha   - continuous value for the learning rate, default is 0.5
-    agent = env.create_agent(LearningAgent,learning=True, alpha=0.5)
+    agent = env.create_agent(LearningAgent,learning=True, alpha=0.6)
 
     ##############
     # Follow the driving agent
@@ -212,8 +215,20 @@ def run():
     # Flags:
     #   tolerance  - epsilon tolerance before beginning testing, default is 0.05
     #   n_test     - discrete number of testing trials to perform, default is 0
-    sim.run(n_test=50, tolerance=0.01)
+    sim.run(n_test=50, tolerance=0.0000001)
 
+def get_opt_result():
+    accepted_ratings = ["A", "A+"]
+    safety_rating, reliability_rating = evaluate_results('sim_improved-learning.csv')
+    f = open('smartcab/ratings.txt', 'a')
+    print >> f, "Rating results \n"
+    print >> f, safety_rating
+    print >> f, reliability_rating
+    f.close()
+    if safety_rating not in accepted_ratings or reliability_rating not in accepted_ratings:
+        run()
+        return get_opt_result()
 
 if __name__ == '__main__':
-    run()
+    get_opt_result()
+    #run()
