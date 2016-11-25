@@ -73,8 +73,8 @@ class LearningAgent(Agent):
         light = inputs['light']
         oncoming = inputs['oncoming']
         left = inputs['left']
-        right = inputs['right']
-        state = (waypoint, light, oncoming, left, right)
+        #right = inputs['right']
+        state = (waypoint, light, oncoming, left)
 
         return state
 
@@ -218,7 +218,7 @@ def run():
     sim.run(n_test=50, tolerance=0.0000001)
 
 def get_opt_result():
-    accepted_ratings = ["A", "A+"]
+    accepted_ratings = ["A+"]
     safety_rating, reliability_rating = evaluate_results('sim_improved-learning.csv')
     f = open('smartcab/ratings.txt', 'a')
     print >> f, "Rating results \n"
