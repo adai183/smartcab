@@ -193,7 +193,7 @@ def run():
     #   learning   - set to True to force the driving agent to use Q-learning
     #    * epsilon - continuous value for the exploration factor, default is 1
     #    * alpha   - continuous value for the learning rate, default is 0.5
-    agent = env.create_agent(LearningAgent,learning=True, alpha=0.6)
+    agent = env.create_agent(LearningAgent,learning=True, alpha=0.25)
 
     ##############
     # Follow the driving agent
@@ -215,11 +215,12 @@ def run():
     # Flags:
     #   tolerance  - epsilon tolerance before beginning testing, default is 0.05
     #   n_test     - discrete number of testing trials to perform, default is 0
-    sim.run(n_test=50, tolerance=0.0000001)
+    sim.run(n_test=50, tolerance=0.01)
 
 def get_opt_result():
     accepted_ratings = ["A+"]
     safety_rating, reliability_rating = evaluate_results('sim_improved-learning.csv')
+    # log evaluation to ratings.txt
     f = open('smartcab/ratings.txt', 'a')
     print >> f, "Rating results \n"
     print >> f, safety_rating
@@ -230,5 +231,5 @@ def get_opt_result():
         return get_opt_result()
 
 if __name__ == '__main__':
-    get_opt_result()
-    #run()
+    #get_opt_result()
+    run()
